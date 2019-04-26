@@ -1,5 +1,5 @@
 {
-  "name": "openweather-apis",
+  "name": "openweather-apis-promise",
   "version": "4.0.0",
   "description": "Simple APIs to use with OpenWeatherMap.org free servicies, request a APPID on http://openweathermap.org/appid and start!",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:CICCIOSGAMINO/openweather-apis.git"
+    "url": "git@github.com:Feder1co5oave/openweather-apis-promise.git"
   },
   "keywords": [
     "openweather",
@@ -27,7 +27,7 @@
   "bugs": {
     "url": "https://github.com/CICCIOSGAMINO/openweather-apis/issues"
   },
-  "homepage": "https://github.com/CICCIOSGAMINO/openweather-apis",
+  "homepage": "https://github.com/Feder1co5oave/openweather-apis-promise",
   "devDependencies": {
     "chai": "^3.4.1",
     "mocha":"^2.3.4"

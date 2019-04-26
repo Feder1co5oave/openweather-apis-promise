@@ -2,249 +2,233 @@
 // weather.js - APIs for openweathermap.org
 (function(){
 
-  var config = {
-    city : 'Fairplay',
-    units : 'metric',
-    lan : 'it',
-    format : 'json',
-    APPID : null
-  };
+  const http = require('http');
+  class OpenWeatherMap {
+    constructor(_config) {
+      if (_config) this.config = Object.assign({}, _config);
+      else this.config = {
+        city : 'Fairplay',
+        units : 'metric',
+        lan : 'en',
+        format : 'json',
+        APPID : null
+      };
+    }
 
-  // main settings
-  var http = require('http');
-  var options = {
-    host : 'api.openweathermap.org',
-    path: '/data/2.5/weather?q=fairplay',
-    withCredentials: false
-  };
-
-  var weather = exports;
-
-  // weather(set)  --------------------------------------------  weather(set)  ---------------------------------------------
-  weather.setLang = function(lang){
-    config.lan = lang.toLowerCase();
-  };
-
-  weather.setCity = function(city){
-    config.city = encodeURIComponent(city.toLowerCase());
-  };
-
-  weather.setCoordinate = function(latitude, longitude){
-    config.latitude = latitude;
-    config.longitude = longitude;
-  };
-
-  weather.setCityId = function(cityid){
-    config.cityId = cityid;
-  };
-
-  weather.setZipCode = function(zip){
-    config.zip = zip;
-  };
-
-  weather.setUnits = function(units){
-    config.units = units.toLowerCase();
-  };
-
-  weather.setAPPID = function(appid){
-    config.APPID = appid;
-  };
-
-  // weather(get)  ---------------------------------------------  weather(get)  ---------------------------------------------
-  weather.getLang = function(){
-    return config.lan;
-  };
-
-  weather.getCity = function(){
-    return config.city;
-  };
-
-  weather.getCoordinate = function(){
-    return {
-      "latitude": config.latitude,
-      "longitude": config.longitude
-    };
-  };
-
-  weather.getCityId = function(){
-    return config.cityId;
-  };
-
-  weather.getZipCode = function(){
-    return config.zip;
-  };
-
-  weather.getUnits = function(){
-    return config.units;
-  };
-
-  weather.getFormat = function(){
-    return config.format;
-  };
-
-  weather.getError = function(callback){
-     getErr(callback);
-  };
-
-  weather.getAPPID = function(){
-    return config.APPID;
-  };
-
-  // get temperature
-  weather.getTemperature = function(callback){
-    getTemp(callback);
-  };
-
-  // get the atmospheric pressure
-  weather.getPressure = function(callback){
-    getPres(callback);
-  };
-
-  weather.getHumidity = function(callback){
-    getHum(callback);
-  };
-
-  weather.getDescription = function(callback){
-    getDesc(callback);
-  };
-
-  weather.getAllWeather = function(callback){
-    getData(buildPath(), callback);
-  };
-
-  weather.getWeatherForecast = function(callback){
-    getData(buildPathForecast(), callback);
-  };
-
-  weather.getWeatherForecastForDays = function(days, callback){
-    getData(buildPathForecastForDays(days), callback);
-  };
-
-    weather.getWeatherForecastForHours = function(hours, callback){
-        getData(buildPathForecastForHours(hours), callback);
+    setLang(lang) {
+      var r = new OpenWeatherMap(this.config);
+      r.config.lan = lang.toLowerCase();
+      return r;
     };
 
-  weather.getSmartJSON = function(callback){
-    getSmart(callback);
-  };
+    setCity(city){
+      var r = new OpenWeatherMap(this.config);
+      r.config.city = encodeURIComponent(city.toLowerCase());
+      return r;
+    };
 
-  // active functions()  -------------------------------------  active functions()  --------------------------------------------
+    setCoordinate(latitude, longitude){
+      var r = new OpenWeatherMap(this.config);
+      r.config.latitude = latitude;
+      r.config.longitude = longitude;
+      return r;
+    };
 
-  function getErr(callback){
-    // set new path to throw the http exception
-    options.path = 'timetocrash';
-    http.get(options, function(err,data){
-        return callback(err,data);
-    });
-  }
+    setCityId(cityid){
+      var r = new OpenWeatherMap(this.config);
+      r.config.cityId = cityid;
+      return r;
+    };
 
-  function getPres(callback){
-    getData(buildPath(), function(err,jsonObj){
-      return callback(err,jsonObj.main.pressure);
-    });
-  }
+    setZipCode(zip){
+      var r = new OpenWeatherMap(this.config);
+      r.config.zip = zip;
+      return r;
+    };
 
-  function getTemp(callback){
-    getData(buildPath(), function(err,jsonObj){
-      return callback(err,jsonObj.main.temp);
-    });
-  }
+    setUnits(units){
+      var r = new OpenWeatherMap(this.config);
+      r.config.units = units.toLowerCase();
+      return r;
+    };
 
-  function getHum(callback){
-    getData(buildPath(), function(err,jsonObj){
-      return callback(err,jsonObj.main.humidity);
-    });
-  }
+    setAPPID(appid){
+      var r = new OpenWeatherMap(this.config);
+      r.config.APPID = appid;
+      return r;
+    };
 
-  function getDesc(callback){
-    getData(buildPath(), function(err,jsonObj){
-      return callback(err, (jsonObj.weather)[0].description);
-    });
-  }
+    // OpenWeatherMap.prototype(get)  ---------------------------------------------  OpenWeatherMap.prototype(get)  ---------------------------------------------
+    getLang() {
+      return this.config.lan;
+    };
 
-  function getSmart(callback){
-    getData(buildPath(), function(err,jsonObj){
-      var smartJSON = {};
-      smartJSON.temp = jsonObj.main.temp;
-      smartJSON.humidity = jsonObj.main.humidity;
-      smartJSON.pressure = jsonObj.main.pressure;
-      smartJSON.description = ((jsonObj.weather[0]).description);
-      smartJSON.weathercode = ((jsonObj.weather[0]).id);
+    getCity() {
+      return this.config.city;
+    };
 
-      // return the rain in mm if present 
-      if(jsonObj.precipitation){
-        smartJSON.rain = jsonObj.precipitation.value;
-      }else {
-        smartJSON.rain = 0;
-      }
+    getCoordinate() {
+      return {
+        "latitude": this.config.latitude,
+        "longitude": this.config.longitude
+      };
+    };
 
-      if(jsonObj.rain){
-        var rain3h = jsonObj.rain;
-        smartJSON.rain = Math.round(rain3h['3h'] / 3);
-      }
-      
-      return callback(err,smartJSON);
-    });
-  }
+    getCityId() {
+      return this.config.cityId;
+    };
 
-  function getCoordinate(){
-    var coordinateAvailable = config.latitude && config.longitude;
-    var cityIdAvailable = config.cityId;
-    var coordinateQuery = 'q='+config.city;
-    if (cityIdAvailable) coordinateQuery = 'id='+config.cityId;
-    if (config.zip) coordinateQuery = 'zip='+config.zip;
-    else if (coordinateAvailable) coordinateQuery = 'lat='+config.latitude+'&lon='+config.longitude;
-    return coordinateQuery;
-  }
+    getZipCode() {
+      return this.config.zip;
+    };
 
-  function buildPath(){
-    return '/data/2.5/weather?' + getCoordinate() + '&units=' + config.units + '&lang=' + config.lan + '&mode=json&APPID=' + config.APPID;
-  }
+    getUnits() {
+      return this.config.units;
+    };
 
-  function buildPathForecast(){
-    return '/data/2.5/forecast?' + getCoordinate() + '&units=' + config.units + '&lang=' + config.lan + '&mode=json&APPID=' + config.APPID;
-  }
+    getFormat() {
+      return this.config.format;
+    };
 
-  function buildPathForecastForDays(days){
-    return '/data/2.5/forecast/daily?' + getCoordinate() + '&cnt=' + days + '&units=' + config.units + '&lang=' + config.lan + '&mode=json&APPID=' + config.APPID;
-  }
+    getAPPID() {
+      return this.config.APPID;
+    };
 
-  function buildPathForecastForHours(hours) {
-      return '/data/2.5/forecast/hour?' + getCoordinate() + '&cnt=' + hours + '&units=' + config.units + '&lang=' + config.lan + '&mode=json&APPID=' + config.APPID;
-  }
-
-  function getData(url, callback, tries){
-    options.path = url;
-    var conn = http.get(options, function(res){
-      var chunks = '';
-      res.on('data', function(chunk) {
-          chunks += chunk;
+    getError() {
+      return new Promise((resolve, reject) => {
+        const options = {
+          host : 'api.openweathermap.org',
+          path: 'timetocrash',
+          withCredentials: false
+        };
+        http.get(options, function(err,data){
+          reject(err, data);
+        });
       });
-      res.on('end', function () {
-          var parsed = {};
+    };
 
-          if (!chunks && (!tries || tries < 3)) {
-              return getData(url, callback, (tries||0)+1);
-          }
+    getTemperature() {
+      return OpenWeatherMap.getData(this.buildPath()).then(json => json.main.temp);
+    }
 
-          // Try-Catch added by Mikael Aspehed
-          try{
-            parsed = JSON.parse(chunks);
-          }catch(e){
-            parsed = {error:e};
-          }
+    getPressure() {
+      return OpenWeatherMap.getData(this.buildPath()).then(json => json.main.pressure);
+    }
 
-          return callback(null,parsed);
+    getHumidity() {
+      return OpenWeatherMap.getData(this.buildPath()).then(json => json.main.humidity);
+    }
+
+    getDescription() {
+      return OpenWeatherMap.getData(this.buildPath()).then(json => (json.weather)[0].description);
+    }
+
+    getAllWeather() {
+      return OpenWeatherMap.getData(this.buildPath());
+    }
+
+    getWeatherForecast() {
+      return OpenWeatherMap.getData(this.buildPathForecast());
+    }
+
+    getWeatherForecastForDays(days) {
+      return OpenWeatherMap.getData(this.buildPathForecastForDays(days));
+    }
+
+    getWeatherForecastForHours(hours) {
+      return OpenWeatherMap.getData(this.buildPathForecastForHours(hours));
+    }
+
+    getSmartJSON() {
+      return OpenWeatherMap.getData(this.buildPath()).then(json => {
+        var smart = {
+          temp: json.main.temp,
+          humidity: json.main.humidity,
+          pressure: json.main.pressure,
+          description: (json.weather[0]).description,
+          weathercode: (json.weather[0]).id
+        };
+
+        if (json.precipitation) smart.rain = json.precipitation.value;
+        else smart.rain = 0;
+
+        if (json.rain) {
+          var rain3h = json.rain;
+          smart.rain = Math.round(rain3h['3h'] / 3);
+        }
+        return smart;
       });
+    }
 
-      res.on('error', function(err){
-          return callback(err, null);
+    // active functions()  -------------------------------------  active functions()  --------------------------------------------
+
+    getErr() {
+
+    }
+
+    getCoordinateQuery() {
+      var coordinateAvailable = this.config.latitude && this.config.longitude;
+      var cityIdAvailable = this.config.cityId;
+      var coordinateQuery = 'q='+this.config.city;
+      if (cityIdAvailable) coordinateQuery = 'id='+this.config.cityId;
+      if (this.config.zip) coordinateQuery = 'zip='+this.config.zip;
+      else if (coordinateAvailable) coordinateQuery = 'lat='+this.config.latitude+'&lon='+this.config.longitude;
+      return coordinateQuery;
+    }
+
+    buildPath() {
+      return '/data/2.5/weather?' + this.getCoordinateQuery() + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+    }
+
+    buildPathForecast() { 
+      return '/data/2.5/forecast?' + this.getCoordinateQuery() + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+    }
+
+    buildPathForecastForDays(days) {
+      return '/data/2.5/forecast/daily?' + this.getCoordinateQuery() + '&cnt=' + days + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+    }
+
+    buildPathForecastForHours(hours) {
+      return '/data/2.5/forecast/hour?' + this.getCoordinateQuery() + '&cnt=' + hours + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+    }
+
+    static getData(url, tries = 3) {
+      return new Promise((resolve, reject) => {
+        var options = {
+          host : 'api.openweathermap.org',
+          path: url,
+          withCredentials: false
+        };
+        var conn = http.get(options, function(res) {
+          var chunks = '';
+          res.on('data', chunk => { chunks += chunk; });
+          res.on('end', () => {
+            var parsed = {};
+
+            if (!chunks && (!tries || tries < 3)) {
+              resolve(OpenWeatherMap.getData(url, (tries||0)+1));
+            }
+            // Try-Catch added by Mikael Aspehed
+            try {
+              parsed = JSON.parse(chunks);
+              resolve(parsed);
+            } catch (e) {
+              parsed = { error: e };
+              reject(parsed);
+            }
+          });
+
+          res.on('error', function(err) {
+            reject(err);
+          });
+        });
+
+        conn.on('error', function(err) {
+          reject(err);
+        });
       });
-    });
-
-    conn.on('error', function(err){
-      return callback(err, null);
-    });
+    }
   }
 
+  module.exports = OpenWeatherMap;
 })();
