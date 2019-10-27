@@ -145,6 +145,16 @@
       return this.getData(this.buildPath());
     }
 
+    getMultiWeather() {
+      return this.getData(this.buildMultiPath()).then(json => json.list.map(resp => {
+        try {
+          resp.timezone = resp.sys.timezone;
+          delete resp.sys.timezone;
+        } catch (e) {}
+        return resp;
+      }));
+    }
+
     getWeatherForecast() {
       return this.getData(this.buildPathForecast());
     }
@@ -217,6 +227,10 @@
       return '/data/2.5/weather?' + query(this.getCoordinateQuery());
     }
 
+    buildMultiPath() {
+      return '/data/2.5/group?' + query(this.getCoordinateQuery());
+    }
+
     buildPathForecast() { 
       return '/data/2.5/forecast?' + query(this.getCoordinateQuery());
     }
@@ -256,7 +270,7 @@
             }
             try {
               parsed = JSON.parse(chunks);
-              if (parsed && parsed.cod == 200) resolve(parsed);
+              if (parsed && (parsed.cod == 200 || parsed.cnt >= 0)) resolve(parsed);
               else reject(parsed);
             } catch (e) {
               parsed = { error: e };
