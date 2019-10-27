@@ -3,6 +3,9 @@
 (function(){
 
   const http = require('http');
+  const https = require('https');
+  const querystring = require('querystring');
+  const query = querystring.stringify
   class OpenWeatherMap {
     constructor(_config) {
       if (_config) this.config = Object.assign({}, _config);
@@ -11,7 +14,8 @@
         units : 'metric',
         lan : 'en',
         format : 'json',
-        APPID : null
+        APPID : null,
+        ssl: false
       };
     }
 
@@ -58,6 +62,12 @@
       return r;
     };
 
+    setSsl(ssl){
+      var r = new OpenWeatherMap(this.config);
+      r.config.ssl = ssl;
+      return r;
+    }
+
     // OpenWeatherMap.prototype(get)  ---------------------------------------------  OpenWeatherMap.prototype(get)  ---------------------------------------------
     getLang() {
       return this.config.lan;
@@ -94,6 +104,10 @@
       return this.config.APPID;
     };
 
+    getSsl() {
+      return this.config.ssl;
+    };
+
     getError() {
       return new Promise((resolve, reject) => {
         const options = {
@@ -108,39 +122,39 @@
     };
 
     getTemperature() {
-      return OpenWeatherMap.getData(this.buildPath()).then(json => json.main.temp);
+      return this.getData(this.buildPath()).then(json => json.main.temp);
     }
 
     getPressure() {
-      return OpenWeatherMap.getData(this.buildPath()).then(json => json.main.pressure);
+      return this.getData(this.buildPath()).then(json => json.main.pressure);
     }
 
     getHumidity() {
-      return OpenWeatherMap.getData(this.buildPath()).then(json => json.main.humidity);
+      return this.getData(this.buildPath()).then(json => json.main.humidity);
     }
 
     getDescription() {
-      return OpenWeatherMap.getData(this.buildPath()).then(json => (json.weather)[0].description);
+      return this.getData(this.buildPath()).then(json => (json.weather)[0].description);
     }
 
     getAllWeather() {
-      return OpenWeatherMap.getData(this.buildPath());
+      return this.getData(this.buildPath());
     }
 
     getWeatherForecast() {
-      return OpenWeatherMap.getData(this.buildPathForecast());
+      return this.getData(this.buildPathForecast());
     }
 
     getWeatherForecastForDays(days) {
-      return OpenWeatherMap.getData(this.buildPathForecastForDays(days));
+      return this.getData(this.buildPathForecastForDays(days));
     }
 
     getWeatherForecastForHours(hours) {
-      return OpenWeatherMap.getData(this.buildPathForecastForHours(hours));
+      return this.getData(this.buildPathForecastForHours(hours));
     }
 
     getSmartJSON() {
-      return OpenWeatherMap.getData(this.buildPath()).then(json => {
+      return this.getData(this.buildPath()).then(json => {
         var smart = {
           temp: json.main.temp,
           humidity: json.main.humidity,
@@ -162,51 +176,67 @@
 
     // active functions()  -------------------------------------  active functions()  --------------------------------------------
 
+    getHttp() {
+      return this.config.ssl ? https : http;
+    }
+
     getErr() {
 
     }
 
     getCoordinateQuery() {
-      var coordinateAvailable = this.config.latitude && this.config.longitude;
-      var cityIdAvailable = this.config.cityId;
-      var coordinateQuery = 'q='+this.config.city;
-      if (cityIdAvailable) coordinateQuery = 'id='+this.config.cityId;
-      if (this.config.zip) coordinateQuery = 'zip='+this.config.zip;
-      else if (coordinateAvailable) coordinateQuery = 'lat='+this.config.latitude+'&lon='+this.config.longitude;
+      var gpsAvailable = this.config.latitude && this.config.longitude;
+      var coordinateQuery = {
+        units: this.config.units,
+        lang: this.config.lan,
+        mode: 'json',
+        APPID: this.config.APPID
+      };
+      if (this.config.city) coordinateQuery.q = this.config.city;
+      else if (this.config.cityId) coordinateQuery.id = this.config.cityId;
+      else if (this.config.zip) coordinateQuery.zip = this.config.zip;
+      else if (gpsAvailable) {
+        coordinateQuery.lat = this.config.latitude;
+        coordinateQuery.lon = this.config.longitude;
+      }
       return coordinateQuery;
     }
 
     buildPath() {
-      return '/data/2.5/weather?' + this.getCoordinateQuery() + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+      return '/data/2.5/weather?' + query(this.getCoordinateQuery());
     }
 
     buildPathForecast() { 
-      return '/data/2.5/forecast?' + this.getCoordinateQuery() + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+      return '/data/2.5/forecast?' + query(this.getCoordinateQuery());
     }
 
     buildPathForecastForDays(days) {
-      return '/data/2.5/forecast/daily?' + this.getCoordinateQuery() + '&cnt=' + days + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+      let q = this.getCoordinateQuery();
+      q.cnt = days;
+      return '/data/2.5/forecast/daily?' + query(q);
     }
 
     buildPathForecastForHours(hours) {
-      return '/data/2.5/forecast/hour?' + this.getCoordinateQuery() + '&cnt=' + hours + '&units=' + this.config.units + '&lang=' + this.config.lan + '&mode=json&APPID=' + this.config.APPID;
+      let q = this.getCoordinateQuery();
+      q.cnt = hours;
+      return '/data/2.5/forecast/hour?' + query(q);
     }
 
-    static getData(url, tries = 3) {
+    getData(url, tries = 3) {
       return new Promise((resolve, reject) => {
         var options = {
           host : 'api.openweathermap.org',
           path: url,
           withCredentials: false
         };
-        var conn = http.get(options, function(res) {
+        var conn = this.getHttp().get(options, function(res) {
           var chunks = '';
           res.on('data', chunk => { chunks += chunk; });
           res.on('end', () => {
             var parsed = {};
 
             if (!chunks && (!tries || tries < 3)) {
-              resolve(OpenWeatherMap.getData(url, (tries||0)+1));
+              resolve(this.getData(url, (tries||0)+1));
             }
             // Try-Catch added by Mikael Aspehed
             try {

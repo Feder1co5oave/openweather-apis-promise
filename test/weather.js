@@ -93,11 +93,91 @@ describe('OpenWeatherMap ', function(){
 				if(jsonObj.precipitation){
 					chai.assert.typeOf(jsonObj.precipitation.value, 'number');
 				}
-
 				if(!(jsonObj.rain || jsonObj.precipitation)) {
 					chai.assert.equal(jsonObj.rain, 0);
 				}
-				
+				done();
+			});
+		});
+
+		it('Should present short-term weather forecast', function(done){
+			weather.getWeatherForecast().then(obj => {
+				expect(obj).not.empty;
+                expect(obj.cnt).is.equal(40);
+				expect(obj.list).is.not.empty;
+				done();
+			});
+		});
+		it('Should present 3 day weather forecast', function(done){
+			weather.getWeatherForecastForDays(3).then(obj => {
+				expect(obj).not.empty;
+				expect(obj.cnt).is.equal(3);
+				expect(obj.list).is.not.empty;
+				expect(obj.list.length).is.equal(3);
+				done();
+			});
+		});
+
+		it('Should return a smart JSON weather object ', function(done){
+			weather.getSmartJSON().then(smart => {
+				chai.assert.property(smart, 'temp');
+				chai.assert.property(smart, 'humidity');
+				chai.assert.property(smart, 'pressure');
+				chai.assert.property(smart, 'description');
+				done();
+			});
+		});
+	});
+
+	describe('Retrive data with Ssl: ', function(){
+		it('Should set the Ssl to true ', function(){
+			weather = weather.setSsl(true);
+			chai.assert.equal(true, weather.getSsl());
+		});
+
+		it('Should retrive temperature data ', function(done){
+			weather.getTemperature().then(temp => {
+				chai.assert.typeOf(temp , 'number');
+				done();
+			});
+		});
+		it('Should retrive pressure data ', function(done){
+			weather.getPressure().then(pres => {
+				chai.assert.typeOf(pres , 'number');
+				done();
+			});
+		});
+		it('Should retrive humidity data ', function(done){
+			weather.getHumidity().then(hum => {
+				chai.assert.typeOf(hum , 'number');
+				done();
+			});
+		});
+		it('Should retrive brief description of the weather ', function(done){
+			weather.getDescription().then(desc => {
+				chai.assert.typeOf(desc  , 'string');
+				done();
+			});
+		});
+
+		it('Should present all the JSON Weather response data ', function(done){
+			weather.getAllWeather().then(jsonObj => {
+				chai.assert.property(jsonObj , 'weather');
+				done();
+			});
+		});
+
+		it('Should present the rain in mm of last hour if present ', function(done) {
+			weather.getSmartJSON().then(jsonObj => {
+				if(jsonObj.rain){
+					chai.assert.typeOf(jsonObj.rain['3h'], 'number');
+				}
+				if(jsonObj.precipitation){
+					chai.assert.typeOf(jsonObj.precipitation.value, 'number');
+				}
+				if(!(jsonObj.rain || jsonObj.precipitation)) {
+					chai.assert.equal(jsonObj.rain, 0);
+				}
 				done();
 			});
 		});
