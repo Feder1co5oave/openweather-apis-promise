@@ -30,6 +30,6 @@
   "homepage": "https://github.com/Feder1co5oave/openweather-apis-promise",
   "devDependencies": {
     "chai": "^3.4.1",
-    "mocha": "^2.3.4"
+    "mocha": "^6.2.2"
   }
 }

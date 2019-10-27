@@ -214,7 +214,7 @@ describe('OpenWeatherMap ', function(){
 	describe('Error managment section', function(){
 		it('Should show a HTTP error in the request ', function(){
 			weather.getError().catch(err => {
-				chai.assert.typeOf(err, 'error');
+				chai.assert.typeOf(err, 'object');
 			});
 		});
 	});
