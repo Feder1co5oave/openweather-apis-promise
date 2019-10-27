@@ -245,15 +245,19 @@
           var chunks = '';
           res.on('data', chunk => { chunks += chunk; });
           res.on('end', () => {
+            if (res.statusCode != 200) {
+              reject({code: res.statusCode, message: chunks});
+              return;
+            }
             var parsed = {};
 
             if (!chunks && (!tries || tries < 3)) {
               resolve(this.getData(url, (tries||0)+1));
             }
-            // Try-Catch added by Mikael Aspehed
             try {
               parsed = JSON.parse(chunks);
-              resolve(parsed);
+              if (parsed && parsed.cod == 200) resolve(parsed);
+              else reject(parsed);
             } catch (e) {
               parsed = { error: e };
               reject(parsed);
