@@ -8,15 +8,17 @@
   const query = querystring.stringify
   class OpenWeatherMap {
     constructor(_config) {
-      if (_config) this.config = Object.assign({}, _config);
-      else this.config = {
+      _config = _config || {
         city : 'Fairplay',
         units : 'metric',
         lan : 'en',
         format : 'json',
         APPID : null,
-        ssl: false
+        ssl: false,
+        keepAlive: 5000
       };
+      this.config = Object.assign({}, _config);
+      this.config._agent = _config._agent || this.getHttpAgent();
     }
 
     setLang(lang) {
@@ -65,6 +67,8 @@
     setSsl(ssl){
       var r = new OpenWeatherMap(this.config);
       r.config.ssl = ssl;
+      if (r.config.ssl != this.config.ssl)
+        r.config._agent = r.getHttpAgent();
       return r;
     }
 
@@ -180,6 +184,13 @@
       return this.config.ssl ? https : http;
     }
 
+    getHttpAgent() {
+      return new (this.getHttp().Agent)(this.config.keepAlive ? {
+        keepAlive: true,
+        keepAliveMsecs: this.config.keepAlive
+      } : {});
+    }
+
     getErr() {
 
     }
@@ -227,7 +238,8 @@
         var options = {
           host : 'api.openweathermap.org',
           path: url,
-          withCredentials: false
+          withCredentials: false,
+          agent: this.config._agent
         };
         var conn = this.getHttp().get(options, function(res) {
           var chunks = '';
